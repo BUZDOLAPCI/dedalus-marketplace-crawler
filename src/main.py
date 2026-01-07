@@ -7,10 +7,9 @@ import asyncio
 
 from dotenv import load_dotenv
 
+from server import main
 
 load_dotenv()
-
-from server import main
 
 
 if __name__ == "__main__":

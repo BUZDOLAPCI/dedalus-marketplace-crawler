@@ -6,7 +6,6 @@
 import sys
 from pathlib import Path
 
-import pytest
 import requests
 import requests_mock as rm
 

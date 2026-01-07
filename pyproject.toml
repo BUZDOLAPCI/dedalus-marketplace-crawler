@@ -48,6 +48,9 @@ dependencies = [
 Homepage = "https://github.com/dedalus-labs/dedalus-marketplace-crawler"
 Repository = "https://github.com/dedalus-labs/dedalus-marketplace-crawler"
 
+[project.scripts]
+main = "main:main"
+
 # --- DEPENDENCY GROUPS ---
 
 [dependency-groups]

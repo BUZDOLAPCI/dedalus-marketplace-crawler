@@ -20,18 +20,11 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from crawler import (
-    GITHUB_BASE_URL,
-    MARKETPLACE_API_URL,
-    MARKETPLACE_BASE_URL,
-    ScanResult,
-    scan_marketplace_sync,
-)
+from crawler import GITHUB_BASE_URL, MARKETPLACE_API_URL, MARKETPLACE_BASE_URL, ScanResult, scan_marketplace_sync
 
 # Skip integration tests unless explicitly enabled
 pytestmark = pytest.mark.skipif(
-    os.environ.get("INTEGRATION_TEST") != "true",
-    reason="Integration tests require INTEGRATION_TEST=true",
+    os.environ.get("INTEGRATION_TEST") != "true", reason="Integration tests require INTEGRATION_TEST=true"
 )
 
 
@@ -79,15 +72,12 @@ class TestLiveMarketplaceAPI:
         # Expect at least 50% of servers to have GitHub URLs
         min_expected = result.total_servers // 2
         assert len(servers_with_github) >= min_expected, (
-            f"Expected at least {min_expected} servers with GitHub URLs, "
-            f"got {len(servers_with_github)}"
+            f"Expected at least {min_expected} servers with GitHub URLs, got {len(servers_with_github)}"
         )
 
         # Validate GitHub URL format
         for server in servers_with_github:
-            assert server.github_url.startswith(GITHUB_BASE_URL), (
-                f"Invalid GitHub URL format: {server.github_url}"
-            )
+            assert server.github_url.startswith(GITHUB_BASE_URL), f"Invalid GitHub URL format: {server.github_url}"
 
     def test_slug_format(self) -> None:
         """Test that server slugs have the expected publisher/name format."""
@@ -99,9 +89,7 @@ class TestLiveMarketplaceAPI:
 
             parts = server.slug.split("/")
             assert len(parts) == 2, f"Invalid slug format: {server.slug}"
-            assert parts[0] == server.publisher, (
-                f"Slug publisher mismatch: {server.slug} vs {server.publisher}"
-            )
+            assert parts[0] == server.publisher, f"Slug publisher mismatch: {server.slug} vs {server.publisher}"
 
     def test_marketplace_url_matches_slug(self) -> None:
         """Test that marketplace URLs are correctly formed from slugs."""
@@ -109,9 +97,7 @@ class TestLiveMarketplaceAPI:
 
         for server in result.servers:
             expected_url = f"{MARKETPLACE_BASE_URL}/{server.slug}"
-            assert server.marketplace_url == expected_url, (
-                f"URL mismatch: {server.marketplace_url} != {expected_url}"
-            )
+            assert server.marketplace_url == expected_url, f"URL mismatch: {server.marketplace_url} != {expected_url}"
 
     def test_known_servers_exist(self) -> None:
         """Test that some known servers are present in the marketplace."""
@@ -121,10 +107,7 @@ class TestLiveMarketplaceAPI:
 
         # These are servers that should exist based on examples
         # Update this list if servers are removed from marketplace
-        known_servers = [
-            "windsor/ticketmaster-mcp",
-            "windsor/open-meteo-mcp",
-        ]
+        known_servers = ["windsor/ticketmaster-mcp", "windsor/open-meteo-mcp"]
 
         found = [s for s in known_servers if s in slugs]
         assert len(found) > 0, (
@@ -141,9 +124,7 @@ class TestLiveMarketplaceAPI:
 
         valid_languages = {"typescript", "python"}
         for server in servers_with_language:
-            assert server.language in valid_languages, (
-                f"Unexpected language '{server.language}' for {server.slug}"
-            )
+            assert server.language in valid_languages, f"Unexpected language '{server.language}' for {server.slug}"
 
     def test_heat_score_range(self) -> None:
         """Test that heat scores are within expected range."""
@@ -153,9 +134,7 @@ class TestLiveMarketplaceAPI:
         assert len(servers_with_score) > 0, "Expected some servers with heat scores"
 
         for server in servers_with_score:
-            assert 0 <= server.heat_score <= 100, (
-                f"Heat score out of range for {server.slug}: {server.heat_score}"
-            )
+            assert 0 <= server.heat_score <= 100, f"Heat score out of range for {server.slug}: {server.heat_score}"
 
     def test_upvote_count_non_negative(self) -> None:
         """Test that upvote counts are non-negative."""
@@ -163,9 +142,7 @@ class TestLiveMarketplaceAPI:
 
         for server in result.servers:
             if server.upvote_count is not None:
-                assert server.upvote_count >= 0, (
-                    f"Negative upvotes for {server.slug}: {server.upvote_count}"
-                )
+                assert server.upvote_count >= 0, f"Negative upvotes for {server.slug}: {server.upvote_count}"
 
     def test_auth_field_values(self) -> None:
         """Test that auth_required field contains expected values."""
@@ -189,9 +166,7 @@ class TestAPIStability:
         import requests
 
         response = requests.get(MARKETPLACE_API_URL, timeout=30)
-        assert response.status_code == 200, (
-            f"API returned status {response.status_code}"
-        )
+        assert response.status_code == 200, f"API returned status {response.status_code}"
 
     def test_api_returns_json(self) -> None:
         """Test that the API returns valid JSON."""

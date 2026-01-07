@@ -73,10 +73,22 @@ pip install -e .
 Start the server to expose the `scan_marketplace` tool:
 
 ```bash
-uv run python src/main.py
+uv run main
 ```
 
 The server runs on port 8080 by default and provides the `scan_marketplace` tool to AI assistants.
+
+### Dedalus Deployment
+
+Dedalus runs the `main` script defined in `pyproject.toml`, which wraps `src/main.py`.
+
+```bash
+# Optional: set environment variables
+cp config/.env.example .env.local
+
+# Deploy to Dedalus
+dedalus deploy . --name "dedalus-marketplace-crawler"
+```
 
 ### Direct Python Usage
 

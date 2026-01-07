@@ -9,7 +9,9 @@ from dedalus_mcp.server import TransportSecuritySettings
 from crawler import ScanResult, scan_marketplace_sync
 
 
-@tool(description="Scan the Dedalus Marketplace and list all available MCP servers with their details including names, descriptions, GitHub URLs, and optionally tools.")
+@tool(
+    description="Scan the Dedalus Marketplace and list all available MCP servers with their details including names, descriptions, GitHub URLs, and optionally tools."
+)
 async def scan_marketplace(include_tools: bool = False) -> ScanResult:
     """
     Scan the Dedalus Marketplace to discover all available MCP servers.

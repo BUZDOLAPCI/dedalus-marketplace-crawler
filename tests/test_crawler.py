@@ -6,7 +6,6 @@
 import sys
 from pathlib import Path
 
-import pytest
 import requests
 import requests_mock as rm
 
@@ -36,10 +35,7 @@ class TestParseApiServer:
             "description": "Test description",
             "heat_score": 80,
             "upvote_count": 15,
-            "tags": {
-                "language": "python",
-                "auth": {"api_key": True, "oauth": False, "none": False},
-            },
+            "tags": {"language": "python", "auth": {"api_key": True, "oauth": False, "none": False}},
         }
 
         result = _parse_api_server(repo)
@@ -71,11 +67,7 @@ class TestParseApiServer:
 
     def test_parse_server_without_github(self) -> None:
         """Test parsing server without git_slug."""
-        repo = {
-            "slug": "pub/srv",
-            "git_slug": None,
-            "tags": {},
-        }
+        repo = {"slug": "pub/srv", "git_slug": None, "tags": {}}
 
         result = _parse_api_server(repo)
 
@@ -147,11 +139,7 @@ class TestParseToolsFromHtml:
 class TestScanMarketplaceSync:
     """Tests for scan_marketplace_sync function."""
 
-    def test_scan_without_tools(
-        self,
-        mock_api_response: dict,
-        requests_session: requests.Session,
-    ) -> None:
+    def test_scan_without_tools(self, mock_api_response: dict, requests_session: requests.Session) -> None:
         """Test scanning marketplace without fetching tools."""
         with rm.Mocker() as m:
             m.get(MARKETPLACE_API_URL, json=mock_api_response)
@@ -187,14 +175,8 @@ class TestScanMarketplaceSync:
         """Test scanning marketplace with tool fetching enabled."""
         with rm.Mocker() as m:
             m.get(MARKETPLACE_API_URL, json=mock_api_response)
-            m.get(
-                f"{MARKETPLACE_BASE_URL}/testpub/test-server",
-                text=mock_detail_page_with_tools,
-            )
-            m.get(
-                f"{MARKETPLACE_BASE_URL}/anotherpub/another-server",
-                text=mock_detail_page_without_tools,
-            )
+            m.get(f"{MARKETPLACE_BASE_URL}/testpub/test-server", text=mock_detail_page_with_tools)
+            m.get(f"{MARKETPLACE_BASE_URL}/anotherpub/another-server", text=mock_detail_page_without_tools)
 
             result = scan_marketplace_sync(include_tools=True, session=requests_session)
 
@@ -223,23 +205,14 @@ class TestScanMarketplaceSync:
             assert "Failed to fetch marketplace API" in result.errors[0]
 
     def test_scan_handles_detail_page_failure(
-        self,
-        mock_api_response: dict,
-        mock_detail_page_with_tools: str,
-        requests_session: requests.Session,
+        self, mock_api_response: dict, mock_detail_page_with_tools: str, requests_session: requests.Session
     ) -> None:
         """Test that detail page failures don't crash the entire scan."""
         with rm.Mocker() as m:
             m.get(MARKETPLACE_API_URL, json=mock_api_response)
-            m.get(
-                f"{MARKETPLACE_BASE_URL}/testpub/test-server",
-                text=mock_detail_page_with_tools,
-            )
+            m.get(f"{MARKETPLACE_BASE_URL}/testpub/test-server", text=mock_detail_page_with_tools)
             # Second detail page fails
-            m.get(
-                f"{MARKETPLACE_BASE_URL}/anotherpub/another-server",
-                status_code=404,
-            )
+            m.get(f"{MARKETPLACE_BASE_URL}/anotherpub/another-server", status_code=404)
 
             result = scan_marketplace_sync(include_tools=True, session=requests_session)
 
@@ -280,12 +253,7 @@ class TestServerInfoModel:
 
     def test_server_info_defaults(self) -> None:
         """Test ServerInfo with minimal required fields."""
-        server = ServerInfo(
-            name="test",
-            slug="pub/test",
-            publisher="pub",
-            marketplace_url="https://example.com",
-        )
+        server = ServerInfo(name="test", slug="pub/test", publisher="pub", marketplace_url="https://example.com")
 
         assert server.description is None
         assert server.github_url is None
@@ -322,14 +290,7 @@ class TestScanResultModel:
         """Test ScanResult with errors."""
         result = ScanResult(
             total_servers=1,
-            servers=[
-                ServerInfo(
-                    name="test",
-                    slug="pub/test",
-                    publisher="pub",
-                    marketplace_url="https://example.com",
-                )
-            ],
+            servers=[ServerInfo(name="test", slug="pub/test", publisher="pub", marketplace_url="https://example.com")],
             errors=["Error 1", "Error 2"],
         )
 

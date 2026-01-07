@@ -119,8 +119,18 @@ def _parse_tools_from_html(html: str) -> list[ToolInfo]:
 
     # Common section/footer headers to exclude
     excluded_names = {
-        "Tools", "Resources", "Prompts", "Product", "Company", "Legal",
-        "Documentation", "Support", "Contact", "About", "Blog", "Pricing",
+        "Tools",
+        "Resources",
+        "Prompts",
+        "Product",
+        "Company",
+        "Legal",
+        "Documentation",
+        "Support",
+        "Contact",
+        "About",
+        "Blog",
+        "Pricing",
     }
 
     # Find tool cards - specifically look for h4 elements within card components
@@ -150,9 +160,7 @@ def _parse_tools_from_html(html: str) -> list[ToolInfo]:
 
 
 def _enrich_with_tools(
-    session: requests.Session,
-    servers: list[ServerInfo],
-    max_workers: int = MAX_WORKERS,
+    session: requests.Session, servers: list[ServerInfo], max_workers: int = MAX_WORKERS
 ) -> list[str]:
     """Enrich servers with tool information by scraping detail pages."""
     errors = []
@@ -181,10 +189,7 @@ def _enrich_with_tools(
     return errors
 
 
-def scan_marketplace_sync(
-    include_tools: bool = False,
-    session: requests.Session | None = None,
-) -> ScanResult:
+def scan_marketplace_sync(include_tools: bool = False, session: requests.Session | None = None) -> ScanResult:
     """
     Scan the Dedalus Marketplace and return information about all servers.
 
@@ -198,10 +203,7 @@ def scan_marketplace_sync(
     """
     if session is None:
         session = requests.Session()
-        session.headers.update({
-            "User-Agent": "DedalusMarketplaceCrawler/1.0",
-            "Accept": "application/json",
-        })
+        session.headers.update({"User-Agent": "DedalusMarketplaceCrawler/1.0", "Accept": "application/json"})
 
     errors: list[str] = []
 
@@ -209,11 +211,7 @@ def scan_marketplace_sync(
     try:
         data = _fetch_api_data(session)
     except requests.RequestException as e:
-        return ScanResult(
-            total_servers=0,
-            servers=[],
-            errors=[f"Failed to fetch marketplace API: {e}"],
-        )
+        return ScanResult(total_servers=0, servers=[], errors=[f"Failed to fetch marketplace API: {e}"])
 
     repositories = data.get("repositories", [])
     servers = [_parse_api_server(repo) for repo in repositories]
@@ -223,8 +221,4 @@ def scan_marketplace_sync(
         tool_errors = _enrich_with_tools(session, servers)
         errors.extend(tool_errors)
 
-    return ScanResult(
-        total_servers=len(servers),
-        servers=servers,
-        errors=errors,
-    )
+    return ScanResult(total_servers=len(servers), servers=servers, errors=errors)

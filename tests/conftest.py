@@ -113,8 +113,5 @@ def mock_detail_page_without_tools() -> str:
 def requests_session() -> requests.Session:
     """Create a requests session for testing."""
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "TestCrawler/1.0",
-        "Accept": "application/json",
-    })
+    session.headers.update({"User-Agent": "TestCrawler/1.0", "Accept": "application/json"})
     return session

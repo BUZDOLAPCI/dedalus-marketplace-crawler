@@ -11,7 +11,7 @@ from typing import Any
 
 import requests
 from bs4 import BeautifulSoup
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class ServerInfo(BaseModel):
     language: str | None = None
     heat_score: int | None = None
     upvote_count: int | None = None
-    tools: list[ToolInfo] = []
+    tools: list[ToolInfo] = Field(default_factory=list)
     auth_required: str | None = None
 
 
@@ -50,7 +50,7 @@ class ScanResult(BaseModel):
 
     total_servers: int
     servers: list[ServerInfo]
-    errors: list[str] = []
+    errors: list[str] = Field(default_factory=list)
 
 
 def _fetch_api_data(session: requests.Session) -> dict[str, Any]:

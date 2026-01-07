@@ -1,0 +1,168 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Run integration tests daily at 6 AM UTC to catch API changes
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      run_integration:
+        description: 'Run integration tests against live API'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  PYTHON_VERSION: "3.12"
+  UV_CACHE_DIR: .cache/uv
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --group lint
+
+      - name: Run ruff check
+        run: uv run ruff check src/ tests/
+
+      - name: Run ruff format check
+        run: uv run ruff format --check src/ tests/
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.UV_CACHE_DIR }}
+          key: uv-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: uv sync --group test
+
+      - name: Run unit tests
+        run: uv run pytest tests/test_crawler.py -v --tb=short --cov=src --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: github.event_name != 'schedule'
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    # Run on schedule, manual trigger, or if explicitly requested
+    if: |
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.UV_CACHE_DIR }}
+          key: uv-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: uv sync --group test
+
+      - name: Run integration tests
+        run: uv run pytest tests/test_integration.py -v --tb=short
+        env:
+          INTEGRATION_TEST: "true"
+
+      - name: Verify API response structure
+        run: |
+          uv run python -c "
+          import sys
+          sys.path.insert(0, 'src')
+          from crawler import scan_marketplace_sync
+
+          result = scan_marketplace_sync(include_tools=False)
+
+          # Verify we got results
+          assert result.total_servers > 0, f'Expected servers, got {result.total_servers}'
+          assert len(result.errors) == 0, f'Unexpected errors: {result.errors}'
+
+          # Verify structure of first server
+          server = result.servers[0]
+          assert server.name, 'Server name is required'
+          assert server.slug, 'Server slug is required'
+          assert server.publisher, 'Publisher is required'
+          assert server.marketplace_url.startswith('https://'), 'Invalid marketplace URL'
+
+          # Check that we have GitHub URLs
+          servers_with_github = [s for s in result.servers if s.github_url]
+          assert len(servers_with_github) > 0, 'Expected some servers with GitHub URLs'
+
+          print(f'✓ Found {result.total_servers} servers')
+          print(f'✓ {len(servers_with_github)} servers have GitHub URLs')
+          print(f'✓ All structure validations passed')
+          "
+
+  test-matrix:
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --group test
+
+      - name: Run tests
+        run: uv run pytest tests/test_crawler.py -v --tb=short
